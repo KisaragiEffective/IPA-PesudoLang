@@ -88,14 +88,65 @@ class IndexAccess<T>(val ref: Variable<T>, val index: Expr<Int>) : Operator<T>()
         get() = "$ref[$index]"
 }
 
-class Equal<T>(val left: Expr<T>, val right: Expr<T>) : Expr<T> {
+sealed class ComparingOperator : Expr<Boolean>
+
+class Equal<T>(val left: Expr<T>, val right: Expr<T>) : ComparingOperator() {
     override fun toString(): String {
         return "$left == $right"
     }
 }
 
-class NotEqual<T>(val left: Expr<T>, val right: Expr<T>) : Expr<T> {
+class NotEqual<T>(val left: Expr<T>, val right: Expr<T>) : ComparingOperator() {
     override fun toString(): String {
         return "$left != $right"
     }
 }
+
+/**
+ * `<=`
+ */
+class LessOrEqual<T>(val left: Expr<T>, val right: Expr<T>) : ComparingOperator() {
+    override fun toString(): String {
+        return "$left <= $right"
+    }
+}
+
+/**
+ * `<`
+ */
+class Less<T>(val left: Expr<T>, val right: Expr<T>) : ComparingOperator() {
+    override fun toString(): String {
+        return "$left < $right"
+    }
+}
+
+/**
+ * `>=`
+ */
+class GreaterOrEqual<T>(val left: Expr<T>, val right: Expr<T>) : ComparingOperator() {
+    override fun toString(): String {
+        return "$left >= $right"
+    }
+}
+
+/**
+ * `>`
+ */
+class Greater<T>(val left: Expr<T>, val right: Expr<T>) : ComparingOperator() {
+    override fun toString(): String {
+        return "$left > $right"
+    }
+}
+
+class And(val left: Expr<Boolean>, val right: Expr<Boolean>) : ComparingOperator() {
+    override fun toString(): String {
+        return "$left and $right"
+    }
+}
+
+class Or(val left: Expr<Boolean>, val right: Expr<Boolean>) : ComparingOperator() {
+    override fun toString(): String {
+        return "$left or $right"
+    }
+}
+

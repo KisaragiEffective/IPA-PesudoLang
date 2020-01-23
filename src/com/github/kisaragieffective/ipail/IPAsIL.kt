@@ -67,6 +67,8 @@ $elseAsm
 sealed class Loop(instructions: List<Instruction>) : Block(instructions)
 
 class BeforeLoop(val condition: String, instructions: List<Instruction>, val nest: Int = 0) : Loop(instructions) {
+    constructor(condition: Expr<Boolean>, instructions: List<Instruction>, nest: Int = 0)
+            : this(condition.toString(), instructions, nest)
     override fun toString(): String {
         return """
 ■ $condition
@@ -100,7 +102,15 @@ class Variable<T>(override val explain: String, val type: Class<T>) : Member(), 
     override fun value(): T {
         return null as T
     }
+
+    companion object {
+        inline operator fun <reified T> invoke(name: String): Variable<T> {
+            return Variable(name, T::class.java)
+        }
+    }
 }
+
+class Output(val value: Expr<*>) : Instruction()
 
 fun main() {
     val intDeclares = mapOf(

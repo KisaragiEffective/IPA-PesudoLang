@@ -34,4 +34,8 @@ object NullConst : Atom<Nothing?> {
     override fun value(): Nothing? {
         return null
     }
+
+    override fun toString(): String {
+        return "null"
+    }
 }

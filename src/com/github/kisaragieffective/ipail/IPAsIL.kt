@@ -12,7 +12,25 @@ class Comment(val content: String) : Instruction() {
 
 sealed class CallProcedure(val name: String, val value: List<Variable<*>>) : Statement()
 
-sealed class Let<T>(val variable: LeftSideExpression<T>) : Statement()
+sealed class Let<T>(val variable: LeftSideExpression<T>) : Statement() {
+    companion object {
+        operator fun <T> invoke(variable: LeftSideExpression<T>, value: T): LetConst<T> {
+            return LetConst(variable, value)
+        }
+
+        operator fun invoke(variable: LeftSideExpression<String>, @Suppress("UNUSED_PARAMETER") constNull: NullConst): LetExpr<String> {
+            return LetExpr(variable, StringConst("null"))
+        }
+
+        operator fun invoke(variable: LeftSideExpression<String>, @Suppress("UNUSED_PARAMETER") constNull: Nothing?): LetExpr<String> {
+            return this(variable, NullConst)
+        }
+
+        operator fun <T> invoke(variable: LeftSideExpression<T>, expression: Expr<T>): LetExpr<T> {
+            return LetExpr(variable, expression)
+        }
+    }
+}
 
 class LetConst<T>(variable: LeftSideExpression<T>, val value: T) : Let<T>(variable) {
     override fun toString(): String {
@@ -20,21 +38,9 @@ class LetConst<T>(variable: LeftSideExpression<T>, val value: T) : Let<T>(variab
     }
 }
 
-class LetVar<T>(variable: LeftSideExpression<T>, val expression: String) : Let<T>(variable) {
-    override fun toString(): String {
-        return "$variable <- $expression"
-    }
-}
-
 class LetExpr<T>(variable: LeftSideExpression<T>, val expression: Expr<T>) : Let<T>(variable) {
     override fun toString(): String {
         return "$variable <- $expression"
-    }
-
-    companion object {
-        operator fun invoke(variable: LeftSideExpression<String>, constNull: NullConst): LetExpr<String> {
-            return LetExpr(variable, StringConst("null"))
-        }
     }
 }
 
@@ -69,21 +75,30 @@ sealed class Loop(instructions: List<Instruction>) : Block(instructions)
 class BeforeLoop(val condition: String, instructions: List<Instruction>, val nest: Int = 0) : Loop(instructions) {
     constructor(condition: Expr<Boolean>, instructions: List<Instruction>, nest: Int = 0)
             : this(condition.toString(), instructions, nest)
+    private val bar by lazy {
+        "| ".repeat(nest)
+    }
     override fun toString(): String {
         return """
 ■ $condition
-${instructions.joinToString("\n") {"| $it"}}
-■
+${instructions.joinToString("\n") {"$bar| $it"}}
+$bar■
         """.trimIndent()
     }
 }
 
-class AfterLoop(val condition: String, instructions: List<Instruction>) : Loop(instructions) {
+class AfterLoop(val condition: String, instructions: List<Instruction>, val nest: Int = 0) : Loop(instructions) {
+    constructor(condition: Expr<Boolean>, instructions: List<Instruction>, nest: Int = 0)
+            : this(condition.toString(), instructions, nest)
+    private val bar by lazy {
+        "|".repeat(nest)
+    }
+
     override fun toString(): String {
         return """
 ■
-${instructions.joinToString("\n") {"| $it"}}
-■ $condition
+$bar${instructions.joinToString("\n") {"| $it"}}
+$bar■ $condition
         """.trimIndent()
     }
 }
@@ -104,8 +119,14 @@ class Variable<T>(override val explain: String, val type: Class<T>) : Member(), 
     }
 
     companion object {
+        var anonymousCounter = -1
         inline operator fun <reified T> invoke(name: String): Variable<T> {
             return Variable(name, T::class.java)
+        }
+
+        inline fun <reified T> invoke(): Variable<T> {
+            anonymousCounter++
+            return Variable("_____anonymous_$anonymousCounter", T::class.java)
         }
     }
 }
@@ -128,14 +149,14 @@ fun main() {
     val word by stringDeclares
     val add by stringDeclares
     listOf(
-            LetConst(i, 0),
+            Let(i, 0),
             BeforeLoop(
-                    "Word[i] != null",
+                    NotEqual(word[i], object: Expr<String> {}),
                     listOf(
                             LetExpr(i, i + 1)
                     )
             ),
-            LetConst(j, 0),
+            Let(j, 0),
             BeforeLoop(
                     "Add[j] != null",
                     listOf(
@@ -144,7 +165,7 @@ fun main() {
                             LetExpr(j, j + 1)
                     )
             ),
-            LetExpr(add[i], NullConst)
+            Let(add[i], NullConst)
     ).map(Instruction::toString).joinToString("\n").transport()
 }
 

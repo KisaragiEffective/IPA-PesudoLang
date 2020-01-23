@@ -23,21 +23,22 @@ fun main() {
     val sauce by stringDeclation
     val search by stringDeclation
     listOf(
-            LetExpr(count, IntConst(0)),
-            LetExpr(i, IntConst(0)),
+            Let(count, IntConst(0)),
+            Let(i, IntConst(0)),
             Comment("a) right side value"),
             BeforeLoop(
                     LessOrEqual(i, MinusExpr(sauceIndex, searchIndex)),
                     listOf(
-                            LetConst(j, 0),
+                            Let(j, 0),
                             Comment("b) right side value"),
                             BeforeLoop(
-                                    And(Less(j, searchIndex), Equal(IndexAccess(sauce, PlusExpr(i, j)), IndexAccess(search, j))),
+                                    Less(j, searchIndex) and Equal(sauce[PlusExpr(i, j)], search[j]),
                                     listOf(
                                             Output(i),
-                                            LetExpr(count, count + 1),
-                                            LetExpr(i, i + searchIndex)
-                                    )
+                                            Let(count, count + 1),
+                                            Let(i, i + searchIndex)
+                                    ),
+                                    nest = 1
                             )
                     )
             )

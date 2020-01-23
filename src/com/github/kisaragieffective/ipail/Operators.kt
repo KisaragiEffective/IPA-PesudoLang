@@ -100,6 +100,10 @@ class NotEqual<T>(val left: Expr<T>, val right: Expr<T>) : ComparingOperator() {
     override fun toString(): String {
         return "$left != $right"
     }
+
+    companion object {
+
+    }
 }
 
 /**
